@@ -1,13 +1,15 @@
-import fs from "fs";
+import fs from "fs/promises";
 import os from "os";
 import crypto from "crypto";
 import zlib from "zlib";
 import readline from "readline";
+import path from "path";
 
 //creating readline interface:
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
+  prompt: "> ",
 });
 
 //read args from CLI and welcoming user:
@@ -15,17 +17,46 @@ const args = process.argv.slice(2);
 const username =
   args.find((arg) => arg.startsWith("--username="))?.split("=")[1] ||
   "Anonymous";
-rl.write(`Welcome to the File Manager, ${username}!\n`);
+console.log(`Welcome to the File Manager, ${username}!\n`);
+console.log(`You are currently in ${process.cwd()}\n`);
+rl.prompt();
 
-rl.on("line", (input) => {
-  if (input.trim() === ".exit") {
-    rl.write(`\nThank you for using File Manager, ${username}, goodbye!\n`);
-    process.exit();
+//process input events listener:
+rl.on("line", async (input) => {
+  if (input.trim() === "up") {
+    try {
+      const cPath = process.cwd();
+      const pPath = path.resolve(cPath, "..");
+      if (cPath !== pPath) {
+        process.chdir("..");
+      } else {
+        console.log("You are already at the root directory.\n");
+      }
+    } catch (error) {
+      console.error("Operation failed\n");
+    }
+  } else if (input.startsWith("cd ")) {
+    const pathToDir = input.split("cd ")[1].trim();
+    try {
+      await fs.access(pathToDir);
+      process.chdir(pathToDir);
+    } catch (error) {
+      console.log("Operation failed\n");
+    }
+  } else if (input.trim() === ".exit") {
+    finishProcess();
+  } else {
+    console.error("Invalid input\n");
   }
-  // Handle other inputs...
+
+  console.log(`You are currently in ${process.cwd()}\n`);
+  rl.prompt();
+}).on("close", () => {
+  finishProcess();
 });
 
-rl.on("SIGINT", () => {
-  rl.write(`\nThank you for using File Manager, ${username}, goodbye!\n`);
+function finishProcess() {
+  console.log(`Thank you for using File Manager, ${username}, goodbye!\n`);
+  console.log(`You are currently in ${process.cwd()}\n`);
   process.exit();
-});
+}
