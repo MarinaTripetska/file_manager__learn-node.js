@@ -182,6 +182,60 @@ rl.on("line", async (input) => {
     } catch (error) {
       console.log("Operation failed\n");
     }
+  } else if (input.startsWith("compress ")) {
+    const [filePath, destDir] = input.split("compress ")[1].trim().split(" ");
+
+    try {
+      await fsPromises.access(filePath);
+      await fsPromises.access(destDir);
+
+      const fileName = path.basename(filePath, path.extname(filePath)) + ".br";
+      const destPath = path.join(destDir, fileName);
+
+      const readStream = fs.createReadStream(filePath);
+      const compressStream = zlib.createBrotliCompress();
+      const writeStream = fs.createWriteStream(destPath);
+
+      readStream
+        .pipe(compressStream)
+        .pipe(writeStream)
+        .on("error", (err) => {
+          console.error("Operation failed\n");
+        })
+        .on("finish", () => {
+          console.log(`File has been compressed and saved to ${destPath}\n`);
+          rl.prompt();
+        });
+    } catch (error) {
+      console.log("Operation failed\n");
+    }
+  } else if (input.startsWith("decompress ")) {
+    const [filePath, destDir] = input.split("decompress ")[1].trim().split(" ");
+
+    try {
+      await fsPromises.access(filePath);
+      await fsPromises.access(destDir);
+
+      const fileName = path.basename(filePath, path.extname(filePath));
+      const destPath = path.join(destDir, fileName);
+
+      const readStream = fs.createReadStream(filePath);
+      const decompressStream = zlib.createBrotliDecompress();
+      const writeStream = fs.createWriteStream(destPath);
+
+      readStream
+        .pipe(decompressStream)
+        .pipe(writeStream)
+        .on("error", (err) => {
+          console.error("Operation failed\n");
+        })
+        .on("finish", () => {
+          console.log(`File has been decompressed and saved to ${destPath}\n`);
+          rl.prompt();
+        });
+    } catch (error) {
+      console.error("Operation failed\n");
+    }
   } else if (input.trim() === ".exit") {
     finishProcess();
   } else {
