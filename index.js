@@ -74,13 +74,18 @@ rl.on("line", async (input) => {
     try {
       await fsPromises.access(filePath);
 
-      const readStream = fs.createReadStream(filePath);
+      const fileName = path.basename(filePath);
+
+      const readStream = fs.createReadStream(fileName);
+
       readStream.on("data", (chunk) => {
         process.stdout.write(chunk);
       });
+
       readStream.on("error", (err) => {
         console.error("Operation failed\n");
       });
+
       readStream.on("close", () => {
         rl.prompt();
       });
@@ -104,6 +109,35 @@ rl.on("line", async (input) => {
       console.log(`${oldPath} has been renamed to ${newPath}\n`);
     } catch (error) {
       console.error("Operation failed\n");
+    }
+  } else if (input.startsWith("cp ")) {
+    const [pathToFile, pathToNewDir] = input.split("cp ")[1].trim().split(" ");
+
+    try {
+      await fsPromises.access(pathToFile);
+      await fsPromises.access(pathToNewDir);
+
+      const fileName = path.basename(pathToFile);
+      const newPath = path.join(pathToNewDir, fileName);
+
+      const readStream = fs.createReadStream(fileName);
+      const writeStream = fs.createWriteStream(newPath);
+
+      readStream.pipe(writeStream);
+
+      readStream.on("error", (err) => {
+        console.error("Operation failed\n");
+      });
+      writeStream.on("error", (err) => {
+        console.error("Operation failed\n");
+      });
+
+      writeStream.on("finish", () => {
+        console.log(`File has been copied to ${newPath}\n`);
+        rl.prompt();
+      });
+    } catch (error) {
+      console.log("Operation failed\n");
     }
   } else if (input.trim() === ".exit") {
     finishProcess();
