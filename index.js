@@ -87,6 +87,24 @@ rl.on("line", async (input) => {
     } catch (error) {
       console.log("Operation failed\n");
     }
+  } else if (input.startsWith("add ")) {
+    const fileName = input.split("add ")[1].trim();
+
+    try {
+      await fsPromises.writeFile(fileName, "");
+      console.log(`${fileName} has been created successfully\n`);
+    } catch (error) {
+      console.error("Operation failed\n");
+    }
+  } else if (input.startsWith("rn ")) {
+    const [oldPath, newPath] = input.split("rn ")[1].trim().split(" ");
+
+    try {
+      await fsPromises.rename(oldPath, newPath);
+      console.log(`${oldPath} has been renamed to ${newPath}\n`);
+    } catch (error) {
+      console.error("Operation failed\n");
+    }
   } else if (input.trim() === ".exit") {
     finishProcess();
   } else {
