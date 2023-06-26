@@ -1,5 +1,7 @@
 # Self Review Score:
 
+### total score: 256/330
+
 ## Basic Scope
 
 - General
