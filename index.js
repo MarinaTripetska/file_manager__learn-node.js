@@ -139,6 +139,41 @@ rl.on("line", async (input) => {
     } catch (error) {
       console.log("Operation failed\n");
     }
+  } else if (input.startsWith("mv ")) {
+    const [pathToFile, pathToNewDir] = input.split("mv ")[1].trim().split(" ");
+
+    try {
+      await fsPromises.access(pathToFile);
+      await fsPromises.access(pathToNewDir);
+
+      const fileName = path.basename(pathToFile);
+      const newPath = path.join(pathToNewDir, fileName);
+
+      const readStream = fs.createReadStream(fileName);
+      const writeStream = fs.createWriteStream(newPath);
+
+      readStream.pipe(writeStream);
+
+      readStream.on("error", (err) => {
+        console.error("Operation failed\n");
+      });
+      writeStream.on("error", (err) => {
+        console.error("Operation failed\n");
+      });
+
+      writeStream.on("finish", async () => {
+        try {
+          await fsPromises.unlink(pathToFile);
+          console.log(`File has been moved to ${newPath}\n`);
+        } catch (error) {
+          console.error("Failed to delete original file\n");
+        } finally {
+          rl.prompt();
+        }
+      });
+    } catch (error) {
+      console.log("Operation failed\n");
+    }
   } else if (input.trim() === ".exit") {
     finishProcess();
   } else {
