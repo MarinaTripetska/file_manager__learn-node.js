@@ -43,6 +43,31 @@ rl.on("line", async (input) => {
     } catch (error) {
       console.log("Operation failed\n");
     }
+  } else if (input.startsWith("ls")) {
+    try {
+      const files = [];
+      const directories = [];
+      const items = await fs.readdir(process.cwd());
+      await Promise.all(
+        items.map(async (item) => {
+          const fullPath = path.join(process.cwd(), item);
+          const stats = await fs.stat(fullPath);
+
+          if (stats.isDirectory()) {
+            directories.push({ Name: item, Type: "directory" });
+          } else if (stats.isFile()) {
+            files.push({ Name: item, Type: "file" });
+          }
+        })
+      );
+
+      directories.sort((a, b) => a.Name.localeCompare(b.Name));
+      files.sort((a, b) => a.Name.localeCompare(b.Name));
+
+      console.table([...directories, ...files]);
+    } catch (error) {
+      console.log("Operation failed\n");
+    }
   } else if (input.trim() === ".exit") {
     finishProcess();
   } else {
