@@ -1,4 +1,5 @@
-import fs from "fs/promises";
+import fsPromises from "fs/promises";
+import fs from "fs";
 import os from "os";
 import crypto from "crypto";
 import zlib from "zlib";
@@ -38,7 +39,7 @@ rl.on("line", async (input) => {
   } else if (input.startsWith("cd ")) {
     const pathToDir = input.split("cd ")[1].trim();
     try {
-      await fs.access(pathToDir);
+      await fsPromises.access(pathToDir);
       process.chdir(pathToDir);
     } catch (error) {
       console.log("Operation failed\n");
@@ -47,11 +48,11 @@ rl.on("line", async (input) => {
     try {
       const files = [];
       const directories = [];
-      const items = await fs.readdir(process.cwd());
+      const items = await fsPromises.readdir(process.cwd());
       await Promise.all(
         items.map(async (item) => {
           const fullPath = path.join(process.cwd(), item);
-          const stats = await fs.stat(fullPath);
+          const stats = await fsPromises.stat(fullPath);
 
           if (stats.isDirectory()) {
             directories.push({ Name: item, Type: "directory" });
@@ -65,6 +66,24 @@ rl.on("line", async (input) => {
       files.sort((a, b) => a.Name.localeCompare(b.Name));
 
       console.table([...directories, ...files]);
+    } catch (error) {
+      console.log("Operation failed\n");
+    }
+  } else if (input.startsWith("cat ")) {
+    const filePath = input.split("cat ")[1].trim();
+    try {
+      await fsPromises.access(filePath);
+
+      const readStream = fs.createReadStream(filePath);
+      readStream.on("data", (chunk) => {
+        process.stdout.write(chunk);
+      });
+      readStream.on("error", (err) => {
+        console.error("Operation failed\n");
+      });
+      readStream.on("close", () => {
+        rl.prompt();
+      });
     } catch (error) {
       console.log("Operation failed\n");
     }
