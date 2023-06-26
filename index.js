@@ -174,6 +174,14 @@ rl.on("line", async (input) => {
     } catch (error) {
       console.log("Operation failed\n");
     }
+  } else if (input.startsWith("rm ")) {
+    const fileName = input.split("rm ")[1].trim();
+
+    try {
+      await fsPromises.unlink(fileName);
+    } catch (error) {
+      console.log("Operation failed\n");
+    }
   } else if (input.trim() === ".exit") {
     finishProcess();
   } else {
